@@ -1,0 +1,330 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Metadata": 
+    {
+        
+    },
+    "Parameters": 
+    {
+        "InstanceProfileName" :
+        {   
+            "Description": "Instance Profile Name generated as IAM Roles",
+            "Type": "String",
+            "Default" : "Add.Instance.Profile.Name.Here"
+            
+        },
+        
+        "DeploymentRegion" : 
+        {
+            "Description": "Region of Deployment of the Pipeline",
+            "Type": "String",
+            "Default" : "Add.Region.Name.Here"
+        },
+        
+        "ReqInstanceType" :
+        {
+            "Description": "Instance type you want to generate through the pipeline",
+            "Type": "String",
+            "Default" : "Add.Your.Instance.type.Here.(t2.micro)"
+        },
+        
+        "ec2AMIID": 
+        {
+            "Description": "EC2 Parent Image ID",
+            "Type": "String",
+            "Default": "Add.Parent.Image.ID.Here"
+        },
+        
+        "SNSTopicID" :
+        {
+            "Description": "SNS Topic",
+            "Type": "String",
+            "Default" : "Add.SNS.Topic.ID.Here"
+        },
+        
+        "SubnetID" :
+        {
+            "Description": "Subnet in which you want the pipeline to generate the AMIs",
+            "Type": "String",
+            "Default" : "Add.Subnet.ID.Here"
+        },
+        
+        "SecurityGroupID" : 
+        {
+            "Description": "Security Group ID",
+            "Type": "String",
+            "Default" : "Add.Security.Group.ID.Here"
+        },
+        
+        "ImageRecipeARN": 
+        {
+            "Description": "Image Recipe ARN",
+            "Type": "String",
+            "Default":
+            {
+                "Fn::Join": 
+                [
+                    "", 
+                    [
+                        "arn:",
+                        {
+                            "Ref": "AWS::Partition"
+                        },
+                        ":imagebuilder-*-",
+                        {
+                            "Ref": "AWS::AccountId"
+                        }
+                    ]
+                ]
+            }
+        },
+        
+        "InfraConfigARN" : 
+        {
+            "Description": "Infrastructure Configuration ARN",
+            "Type": "String",
+            "Default" : 
+            {
+                "Fn::Join": 
+                [
+                    "", 
+                    [
+                        "arn:",
+                        {
+                            "Ref": "AWS::Partition"
+                        },
+                        ":imagebuilder-*-",
+                        {
+                            "Ref": "AWS::AccountId"
+                        }
+                    ]
+                ]
+            }
+        },
+        
+        "DistribConfigARN" : 
+        {
+            "Description": "Distribution Configuration ARN",
+            "Type": "String",
+            "Default" : 
+            {
+                "Fn::Join": 
+                [
+                    "", 
+                    [
+                        "arn:",
+                        {
+                            "Ref": "AWS::Partition"
+                        },
+                        ":imagebuilder-*-",
+                        {
+                            "Ref": "AWS::AccountId"
+                        }
+                    ]
+                ]
+            }
+        },
+        
+        "ComponentARN" :
+        {   
+            "Description": "Component ARN",
+            "Type": "String",
+            "Default" :
+            {
+                "Fn::Join": 
+                [
+                    "", 
+                    [
+                        "arn:",
+                        {
+                            "Ref": "AWS::Partition"
+                        },
+                        ":imagebuilder-*-",
+                        {
+                            "Ref": "AWS::AccountId"
+                        }
+                    ]
+                ]
+            }
+        }
+        
+        
+    },
+    "Resources": 
+    {
+        "C0mponent": 
+        {
+            "Type": "AWS::ImageBuilder::Component",
+            "Properties": 
+            {
+                "Name": "build_component",
+                "Description": "This block includes additional installations for the AMI",
+                "Platform": "Linux",
+                "Version": "1.0.0",
+                "Data": "name: Testing-Template\ndescription: This is template testing doc\nschemaVersion: 1.0\n\nphases:\n  - name: build\n    steps:\n      - name: HelloWorldStep\n        action: ExecuteBash\n        inputs:\n          commands:\n            - echo \"Hello World!\"\n  - name: validate\n    steps:\n      - name: HelloWorldStep\n        action: ExecuteBash\n        inputs:\n          commands:\n            - echo \"Hello World!\"\n  - name: test\n    steps:\n      - name: HelloWorldStep\n        action: ExecuteBash\n        inputs:\n          commands:\n            - echo \"Hello World!\"\n   \n    \n"
+            }
+
+        },
+        
+        "P1peline": 
+        {
+            "Type": "AWS::ImageBuilder::ImagePipeline",
+            "Properties": 
+            {
+                "Name": "golden_image_pipeline",
+                "Description": "This block generates Golden Images through a guided process pipeline",
+                "Tags": 
+                {
+                    "pipeline": "golden"
+                },
+                "ImageRecipeArn": 
+                {
+                    "Ref" : "ImageRecipeARN"
+                },
+                "InfrastructureConfigurationArn": 
+                {
+                    "Ref" : "InfraConfigARN"
+                },
+                "DistributionConfigurationArn": 
+                {
+                    "Ref" : "DistribConfigARN"
+                },
+                "Schedule": 
+                {
+                    "ScheduleExpression": "cron(0 0 * * 0)",
+                    "PipelineExecutionStartCondition": "EXPRESSION_MATCH_ONLY"
+                },
+                "Status": "DISABLED"
+            },
+            "DependsOn": 
+            [
+                "1mageRecipe",
+                "D1stribConfig",
+                "1nfraConfig"
+            ]
+        },
+        
+        "1mageRecipe": 
+        {
+            "Type": "AWS::ImageBuilder::ImageRecipe",
+            "Properties": 
+            {
+                "Name": "image_recipe",
+                "Tags": 
+                {
+                    "pipeline": "golden"
+                },
+                "Version": "1.0.0",
+                "ParentImage": 
+                {
+                    "Ref": "ec2AMIID"
+                },
+                "Description": "contains contents of image creation process",
+                "Components": 
+                [
+                    {
+                        "ComponentArn": 
+                        {
+                            "Ref" : "ComponentARN"
+                        }
+                    }
+                ]
+            },
+           "DependsOn": 
+            [
+                "C0mponent"
+            ]
+        },
+        
+        "1mage": 
+        {
+            "Type": "AWS::ImageBuilder::Image",
+            "Properties": 
+            {
+                "Tags": 
+                {
+                    "pipeline": "golden"
+                },
+                "ImageRecipeArn": 
+                {
+                    "Ref" : "ImageRecipeARN"
+                },
+                "InfrastructureConfigurationArn": 
+                {
+                    "Ref" : "InfraConfigARN"
+                },
+                "DistributionConfigurationArn": 
+                {
+                    "Ref" : "DistribConfigARN"
+                }
+            },
+            "DependsOn": 
+            [
+                "1mageRecipe",
+                "D1stribConfig",
+                "1nfraConfig"
+            ]
+        },
+        
+        "1nfraConfig": 
+        {
+            "Type": "AWS::ImageBuilder::InfrastructureConfiguration",
+            "Properties": 
+            {
+                "InstanceProfileName": 
+                {
+                    "Ref" : "InstanceProfileName"
+                },
+                "Name": "infrastructure_golden_image",
+                "SecurityGroupIds": 
+                [
+                    {
+                        "Ref" : "SecurityGroupID"
+                    }
+                ],
+                "SnsTopicArn": 
+                {
+                    "Ref" : "SNSTopicID"
+                },
+                "SubnetId": 
+                {
+                    "Ref" : "SubnetID"
+                },
+                "Tags": 
+                {
+                    "pipeline": "golden"
+                },
+                "InstanceTypes": 
+                [
+                    {
+                        "Ref" : "ReqInstanceType"
+                    }
+                ],
+                "TerminateInstanceOnFailure": true
+            }
+        
+        },
+            
+        "D1stribConfig": 
+        {
+            "Type": "AWS::ImageBuilder::DistributionConfiguration",
+            "Properties": 
+            {
+                "Name": "Distribution_golden_image",
+                "Distributions": 
+                [
+                    {
+                        "Region": 
+                        {
+                            "Ref" : "DeploymentRegion"
+                        },
+                        "AmiDistributionConfiguration": 
+                        {
+                            "Name": "golden_ami {{ imagebuilder:buildDate }}"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}
