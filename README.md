@@ -1,14 +1,14 @@
 # aws-automated-ami-generator
-#**Title:** AWS EC2 Golden AMI Pipeline
+**Title:** AWS EC2 Golden AMI Pipeline
 
 
-#**Cloud Provider:** Amazon Web Service (AWS)
+**Cloud Provider:** Amazon Web Service (AWS)
 
 
-#**Platform:** AWS Cloudformation
+**Platform:** AWS Cloudformation
 
 
-#**Script Language:** JSON
+**Script Language:** JSON
 
 
 **Purpose:** This script automates the process of EC2 AMI generation that can be helpful in autoscaling and patching Instances with latest OS and Security updates. It is a JSON Script will create a pipeline which will generate an Automatic EC2 Golden AMI generator pipeline using EC2 Image Builder functionality.
